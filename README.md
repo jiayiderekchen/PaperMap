@@ -1,45 +1,83 @@
-# Paper Crawler - Multi-Conference System
+# PaperMap - Multi-Conference Paper Explorer
 
-This repository contains complete paper analysis systems for multiple AI conferences.
+PaperMap is an open-source tool to crawl, analyse, and visually explore accepted
+papers from major ML conferences. It includes crawler scripts, analysis pipelines,
+and a unified Streamlit dashboard with topic browsing, clustering, keyword trends,
+and paper-level exploration.
+
+> Note: generated conference data is not committed to this repository because it
+> can be large. After cloning, run one of the crawl scripts below to generate the
+> `data/` and `analysis/` files used by the dashboard.
 
 ## Available Conferences
 
-### 🔵 ICLR 2026 
-- **Papers**: 5,359 accepted papers
-- **UI Port**: 8501
-- **Directory**: `./` (root)
-- **Launch**: `streamlit run app/streamlit_app.py`
-- **URL**: http://localhost:8501
+The unified dashboard supports:
 
-### 🔴 NeurIPS 2025
-- **Papers**: 5,286 accepted papers  
-- **UI Port**: 8502
-- **Directory**: `./neurips2025/`
-- **Launch**: `streamlit run neurips2025/app/streamlit_app.py --server.port 8502`
-- **URL**: http://localhost:8502
+- NeurIPS
+- ICLR
+- ICML
+- AAAI
+
+Generated datasets are stored by conference and year, for example:
+
+- `neurips2025/data/` and `neurips2025/analysis/`
+- `iclr2026/data/` and `iclr2026/analysis/`
+- `aaai2026/data/` and `aaai2026/analysis/`
 
 ## Quick Start
 
-### Run Both UIs Simultaneously
-```bash
-# Terminal 1: ICLR 2026
-source .venv/bin/activate
-streamlit run app/streamlit_app.py
+### 1. Install
 
-# Terminal 2: NeurIPS 2025
+```bash
+git clone https://github.com/jiayiderekchen/PaperMap.git
+cd PaperMap
+
+python -m venv .venv
 source .venv/bin/activate
-streamlit run neurips2025/app/streamlit_app.py --server.port 8502
+pip install -r requirements.txt
 ```
 
-### Crawl New Conference
+### 2. Generate Data
+
+For OpenReview-backed conferences:
+
+```bash
+CONFERENCE=NeurIPS YEAR=2025 bash scripts/crawl_openreview.sh
+CONFERENCE=ICLR YEAR=2026 bash scripts/crawl_openreview.sh
+CONFERENCE=ICML YEAR=2025 bash scripts/crawl_openreview.sh
+```
+
+For AAAI 2026:
+
+```bash
+bash scripts/crawl_aaai.sh
+```
+
+The scripts crawl accepted papers, run clustering, compute corpus statistics, and
+extract topics. They create the files expected by the dashboard, including
+`papers_with_clusters.parquet`, `embeddings.npy`, `topic_hierarchy.json`, and
+`top_keywords.csv`.
+
+### 3. Launch the Dashboard
+
 ```bash
 source .venv/bin/activate
+streamlit run app/streamlit_app.py
+```
 
-# For ICLR
-python crawler/run_crawl.py --conference ICLR --year 2026 --out-dir data
+Open http://localhost:8501 in your browser.
 
-# For NeurIPS
-python crawler/run_crawl.py --conference NeurIPS --year 2025 --out-dir neurips2025/data
+If you launch before generating data, the app will run but show a "No data found"
+message for the selected conference/year.
+
+### Optional: Use OpenReview Credentials
+
+Public conference data may work without login, but credentials can improve rate
+limits and access where OpenReview requires authentication.
+
+```bash
+export OPENREVIEW_USERNAME="your_email@domain.com"
+export OPENREVIEW_PASSWORD="your_password"
 ```
 
 ## Features
@@ -105,20 +143,24 @@ python crawler/run_crawl.py --conference NeurIPS --year 2025 --out-dir neurips20
 
 ```
 paper_crawler/
-├── data/                    # ICLR 2026 data
-├── analysis/                # ICLR 2026 analysis
-├── app/                     # ICLR 2026 UI
-├── neurips2025/            # NeurIPS 2025 system
-│   ├── data/
-│   ├── analysis/
-│   └── app/
+├── app/                     # Unified Streamlit UI
 ├── crawler/                 # Shared crawler code
 │   ├── run_crawl.py
+│   ├── crawl_aaai_ojs.py
 │   └── openreview_client.py
 ├── analysis/                # Shared analysis scripts
 │   ├── cluster_analysis.py
 │   ├── corpus_analysis.py
 │   └── topic_extraction.py
+├── scripts/                 # End-to-end crawl + analysis scripts
+│   ├── crawl_openreview.sh
+│   └── crawl_aaai.sh
+├── neurips2025/             # Generated after crawling NeurIPS 2025
+│   ├── data/
+│   └── analysis/
+├── iclr2026/                # Generated after crawling ICLR 2026
+│   ├── data/
+│   └── analysis/
 └── README.md               # This file
 ```
 
@@ -127,26 +169,8 @@ paper_crawler/
 To add a new conference (e.g., ICML 2025):
 
 ```bash
-# 1. Create directory structure
-mkdir -p icml2025/{data,analysis,app}
-
-# 2. Crawl papers
-python crawler/run_crawl.py \
-    --conference ICML \
-    --year 2025 \
-    --out-dir icml2025/data
-
-# 3. Run analysis
-python analysis/cluster_analysis.py --input icml2025/data/papers.parquet --out-dir icml2025/analysis
-python analysis/corpus_analysis.py --input icml2025/data/papers.parquet --out-dir icml2025/analysis
-python analysis/topic_extraction.py --input icml2025/data/papers.parquet --out-dir icml2025/analysis
-
-# 4. Copy and modify UI
-cp app/streamlit_app.py icml2025/app/
-# Edit paths in icml2025/app/streamlit_app.py
-
-# 5. Launch on new port
-streamlit run icml2025/app/streamlit_app.py --server.port 8503
+CONFERENCE=ICML YEAR=2025 bash scripts/crawl_openreview.sh
+streamlit run app/streamlit_app.py
 ```
 
 ## Requirements
@@ -164,13 +188,6 @@ Key dependencies:
 - pyarrow
 
 ## Configuration
-
-### OpenReview Credentials
-Set environment variables or pass as arguments:
-```bash
-export OPENREVIEW_USERNAME="your_email@domain.com"
-export OPENREVIEW_PASSWORD="your_password"
-```
 
 ### Rate Limiting
 Adjust in run_crawl.py:
