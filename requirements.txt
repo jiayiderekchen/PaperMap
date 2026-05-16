@@ -1,0 +1,11 @@
+beautifulsoup4
+lxml
+numpy
+openreview-py
+pandas
+plotly
+pyarrow
+requests
+scikit-learn
+streamlit>=1.57.0
+tqdm
