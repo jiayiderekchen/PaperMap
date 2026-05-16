@@ -5,6 +5,8 @@ papers from major ML conferences. It includes crawler scripts, analysis pipeline
 and a unified Streamlit dashboard with topic browsing, clustering, keyword trends,
 and paper-level exploration.
 
+![PaperMap workflow diagram](PaperMap.png)
+
 > Note: generated conference data is not committed to this repository because it
 > can be large. After cloning, run one of the crawl scripts below to generate the
 > `data/` and `analysis/` files used by the dashboard.
